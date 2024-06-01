@@ -7,6 +7,7 @@ import org.openpnp.model.Configuration;
 import org.openpnp.util.LogUtils;
 import org.openpnp.vision.pipeline.CvPipeline;
 import org.openpnp.vision.pipeline.CvStage;
+import org.pmw.tinylog.Logger;
 import org.simpleframework.xml.Attribute;
 
 /**
@@ -42,7 +43,9 @@ public class ImageWriteDebug extends CvStage {
             return null;
         }
         File file = Configuration.get().createResourceFile(getClass(), prefix, suffix);
-        Imgcodecs.imwrite(file.getAbsolutePath(), pipeline.getWorkingImage());
+        String absolutePath = file.getAbsolutePath();
+        Logger.debug(String.format("writing image, path: '%s'", absolutePath));
+        Imgcodecs.imwrite(absolutePath, pipeline.getWorkingImage());
         return null;
     }
 }
