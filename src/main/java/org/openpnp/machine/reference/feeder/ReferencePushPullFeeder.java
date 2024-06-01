@@ -323,8 +323,12 @@ public class ReferencePushPullFeeder extends ReferenceFeeder {
     }
 
     public void assertCalibrated(boolean tapeFeed) throws Exception {
-        if (getHole1Location().convertToUnits(LengthUnit.Millimeters).getLinearDistanceTo(getHole2Location()) < 3) {
-            throw new Exception("Feeder "+getName()+" sprocket hole locations undefined/too close together.");
+        double distance = getHole1Location().convertToUnits(LengthUnit.Millimeters).getLinearDistanceTo(getHole2Location());
+        if (distance < 3) {
+            String message = String.format("Sprocket hole locations undefined/too close together. feeder: '%s', distance: %.3fmm",
+                    getName(),
+                    distance);
+            throw new Exception(message);
         }
         if ((visionOffset == null && calibrationTrigger != CalibrationTrigger.None)
                 || (tapeFeed && calibrationTrigger == CalibrationTrigger.UntilConfident && !isPrecisionSufficient())
@@ -333,7 +337,7 @@ public class ReferencePushPullFeeder extends ReferenceFeeder {
             obtainCalibratedVisionOffset();
             if (visionOffset == null) {
                 // no lock obtained
-                throw new Exception(String.format("Vision failed on feeder %s.", getName()));
+                throw new Exception(String.format("Vision failed. feeder: '%s'", getName()));
             }
         }
     }
@@ -368,7 +372,7 @@ public class ReferencePushPullFeeder extends ReferenceFeeder {
 
         Head head = nozzle.getHead();
         if (actuator == null) {
-            throw new Exception(String.format("No feed actuator assigned to feeder %s",
+            throw new Exception(String.format("No feed actuator assigned. feeder: '%s'",
                     getName()));
         }
 
