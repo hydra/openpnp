@@ -67,4 +67,37 @@ public class Tape {
 
         return pickLocation;
     }
+
+    /**
+     * Assumes feed/unreeling direction is to the right, as per EIA-481
+     * Z and rotation are meaningless.
+     */
+    public Location getHole1Location(Location pickLocation) {
+        Location hole1Location = new Location(
+                pickLocation.getUnits(),
+                0.0 - cavityCenterOffsetX,
+                0.0 + cavityCenterOffsetY,
+                0.0,
+                0.0
+        );
+
+        return pickLocation.add(hole1Location);
+    }
+
+    /**
+     * Assumes feed/unreeling direction is to the right, as per EIA-481
+     * Z and rotation are meaningless.
+     */
+    public Location getHole2Location(Location pickLocation) {
+        Location hole1Location = getHole1Location(pickLocation);
+        Location hole2Location = new Location(
+                hole1Location.getUnits(),
+                hole1Location.getX() + holePitch,
+                hole1Location.getY(),
+                0.0,
+                0.0
+        );
+
+        return hole2Location;
+    }
 }

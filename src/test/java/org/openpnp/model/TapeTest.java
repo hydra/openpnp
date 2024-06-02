@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TapeTest {
 
+    // TODO delete this, now covered by parameterized tests in `pickLocationFromStart`.
     @Test
     void pickLocationFromStart0402Tape() {
         final double HOLE_PITCH = 4.0;
@@ -100,4 +101,10 @@ class TapeTest {
             );
         }
     }
+
+    @Test
+    void holeLocations() throws Exception {
+        throw new Exception("TODO");
+    }
+
 }
