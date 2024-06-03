@@ -71,6 +71,8 @@ public class Tape {
     /**
      * Assumes feed/unreeling direction is to the right, as per EIA-481
      * Z and rotation are meaningless.
+     *
+     * The hole is to the LEFT of the pick location.
      */
     public Location getHole1Location(Location pickLocation) {
         Location hole1Location = new Location(
@@ -87,17 +89,28 @@ public class Tape {
     /**
      * Assumes feed/unreeling direction is to the right, as per EIA-481
      * Z and rotation are meaningless.
+     *
+     * The second hole is to the RIGHT of the first hole.
      */
     public Location getHole2Location(Location pickLocation) {
+        return getHoleNLocation(pickLocation, 1);
+    }
+
+    /**
+     * Assumes feed/unreeling direction is to the right, as per EIA-481
+     * Z and rotation are meaningless.
+     *
+     * The second hole onwards are to the RIGHT of the first hole.
+     */    public Location getHoleNLocation(Location pickLocation, int holeSkip) {
         Location hole1Location = getHole1Location(pickLocation);
-        Location hole2Location = new Location(
+        Location holeNLocation = new Location(
                 hole1Location.getUnits(),
-                hole1Location.getX() + holePitch,
+                hole1Location.getX() + (holePitch * holeSkip),
                 hole1Location.getY(),
                 0.0,
                 0.0
         );
 
-        return hole2Location;
+        return holeNLocation;
     }
 }
