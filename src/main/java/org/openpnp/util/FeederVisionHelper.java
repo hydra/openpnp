@@ -740,10 +740,13 @@ public class FeederVisionHelper {
                     File file = Configuration.get().createResourceFile(getClass(), "tape-utils", ".png");
                     Imgcodecs.imwrite(file.getAbsolutePath(), resultMat);
                 }
-                BufferedImage showResult = OpenCvUtils.toBufferedImage(resultMat);
-                resultMat.release();
-                MainFrame.get().getCameraViews().getCameraView(camera)
-                .showFilteredImage(showResult, showResultMilliseconds);
+                MainFrame mainFrame = MainFrame.get();
+                if (mainFrame != null) {
+                    BufferedImage showResult = OpenCvUtils.toBufferedImage(resultMat);
+                    resultMat.release();
+                    mainFrame.getCameraViews().getCameraView(camera)
+                            .showFilteredImage(showResult, showResultMilliseconds);
+                }
             }
         }
         catch (ClassCastException e) {
