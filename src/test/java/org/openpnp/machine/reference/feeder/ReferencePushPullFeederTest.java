@@ -180,15 +180,51 @@ class ReferencePushPullFeederTest {
 
     /**
      * * uses default CalibrationTrigger value
-     * * doesn't actually feed anything, since there's no push-pull-motion defined
      */
-    @Test void feed() throws Exception {
-        // given
-        Location pickLocation = calculatePickLocationFromTape(TEST_0402_TAPE, LOCATON_0402_STRIP_TOP_RIGHT, TEST_PICK_HEAD_OFFSET_Z);
+    @Test void feedWithDragPin() throws Exception {
+        // given a feeder, with settings
+        feeder.setPartPitch(new Length(4.0, LengthUnit.Millimeters));
+        feeder.setFeedPitch(new Length(4.0, LengthUnit.Millimeters));
 
-        // and
+        // and a pick location
+        Location pickLocation = calculatePickLocationFromTape(TEST_0402_TAPE, LOCATON_0402_STRIP_TOP_RIGHT, 3, TEST_PICK_HEAD_OFFSET_Z);
         feeder.setLocation(pickLocation);
-        configureHoleLocations(pickLocation);
+
+        //
+        // and some holes
+        //
+
+        // feed/pull direction is to the right
+        feeder.setHole1Location(TEST_0402_TAPE.getHole1Location(pickLocation));
+        // FIXME second hole is to the right, but auto detect picks a hole to the LEFT!
+        feeder.setHole2Location(TEST_0402_TAPE.getHole2Location(pickLocation));
+
+
+        //
+        // and push-pull actuator configuration
+        //
+
+        // First hole
+        Location feedStartLocation = TEST_0402_TAPE.getHoleNLocation(pickLocation, 3);
+        feeder.setFeedStartLocation(feedStartLocation);
+        feeder.setIncludedPull0(false);
+
+        // A bit to the right of the first hole
+        Location feedMid1Location = feedStartLocation.derive(feedStartLocation.getX() + 0.2, null, null, null);
+        feeder.setFeedMid1Location(feedMid1Location);
+        feeder.setIncludedPush1(true);
+        feeder.setIncludedPull1(false);
+
+        // The next hole
+        Location feedMid3Location = TEST_0402_TAPE.getHoleNLocation(pickLocation, 4);
+        feeder.setFeedMid3Location(feedMid3Location);
+        feeder.setIncludedPush3(true);
+        feeder.setIncludedPull3(false);
+
+        // A bit in front of the next hole, so the actuator can release from the tape.
+        Location feedEndLocation = feedMid3Location.derive(feedMid3Location.getX() - 0.2, null, null, null);
+        feeder.setFeedEndLocation(feedEndLocation);
+        feeder.setIncludedPushEnd(true);
 
         // and
         useCameraImage(CameraImage.BEFORE_DRAG);
@@ -198,21 +234,48 @@ class ReferencePushPullFeederTest {
         machine.getDefaultHead().getDefaultCamera().moveTo(pickLocation);
 
         // when
+        System.out.println("*** Calibrating ***");
         Exception e = feeder.autoSetupPipeline(camera, FeederVisionHelper.PipelineType.CircularSymmetry);
 
         // then
         assertNull(e);
 
         // when
+        System.out.println("*** Feeding ***");
         feeder.feed(mockedNozzle);
 
         // then
         // no exception thrown
+
+        // TODO
+        // assert the machine moved as expected.
+        // assert the drag pin and peeler actuators were enabled/disabled at the right time.
+
+        /*
+        AbstractHeadMountable DEBUG: N1.moveToSafeZ(1.0)
+        ReferencePushPullFeeder DEBUG: feed(N1 N1)
+        AbstractHeadMountable DEBUG: DRAG_PIN.moveTo((76.050000, 28.200000, 0.000000, 0.000000 mm), 1.0)
+        ReferenceActuator DEBUG: DRAG_PIN.actuate(true)
+        NullDriver DEBUG: actuate(DRAG_PIN, true)
+        AbstractHeadMountable DEBUG: DRAG_PIN.moveTo((76.250000, 28.200000, 0.000000, 0.000000 mm), 1.0)
+        AbstractHeadMountable DEBUG: DRAG_PIN.moveTo((80.050000, 28.200000, 0.000000, 0.000000 mm), 1.0)
+        AbstractHeadMountable DEBUG: DRAG_PIN.moveTo((79.850000, 28.200000, 0.000000, 0.000000 mm), 1.0)
+        ReferenceActuator DEBUG: PEELER.actuate(true)
+        NullDriver DEBUG: actuate(PEELER, true)
+        ReferenceActuator DEBUG: PEELER.actuate(false)
+        NullDriver DEBUG: actuate(PEELER, false)
+        ReferenceActuator DEBUG: DRAG_PIN.actuate(false)
+        NullDriver DEBUG: actuate(DRAG_PIN, false)
+        ReferenceHead DEBUG: H1.moveToSafeZ(1.0)
+        AbstractHeadMountable DEBUG: N1.moveToSafeZ(1.0)
+        AbstractHeadMountable DEBUG: Top.moveToSafeZ(1.0)
+        AbstractMachine TRACE: Machine entering idle state.
+         */
     }
 
     @Test void autoSetup() throws Exception {
         // given
-        Location pickLocation = calculatePickLocationFromTape(TEST_0402_TAPE, LOCATON_0402_STRIP_TOP_RIGHT, TEST_PICK_HEAD_OFFSET_Z);
+        Location pickLocation = calculatePickLocationFromTape(TEST_0402_TAPE, LOCATON_0402_STRIP_TOP_RIGHT, 0, TEST_PICK_HEAD_OFFSET_Z);
         feeder.setLocation(pickLocation);
 
         // and
@@ -232,20 +295,11 @@ class ReferencePushPullFeederTest {
         // no exception thrown
     }
 
-    private Location calculatePickLocationFromTape(Tape tape, Location topRight, double pick_z_offset) {
+    private Location calculatePickLocationFromTape(Tape tape, Location topRight, int holeSkipCount, double pick_z_offset) {
         Location pickLocation = tape.pickLocationFromStart(topRight);
 
-        // need an offset to the left, equal to one component pitch, because the start tape hole is cut down the middle and cannot be recognised as a hole
-        // and because the first component cavity may be cut in two.
-        // also with a non-zero negative Z offset.
-        pickLocation = pickLocation.derive( pickLocation.getX() - tape.partPitch, null, pick_z_offset, null);
+        pickLocation = pickLocation.derive( pickLocation.getX() - (tape.holePitch * holeSkipCount), null, pick_z_offset, null);
         return pickLocation;
-    }
-
-    private void configureHoleLocations(Location pickLocation) {
-        // feed/pull direction is to the right
-        feeder.setHole1Location(TEST_0402_TAPE.getHole1Location(pickLocation));
-        feeder.setHole2Location(TEST_0402_TAPE.getHole2Location(pickLocation));
     }
 
     public static class TestActuator extends ReferenceActuator {
