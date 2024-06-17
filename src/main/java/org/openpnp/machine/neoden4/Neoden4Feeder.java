@@ -2,8 +2,6 @@ package org.openpnp.machine.neoden4;
 
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
@@ -26,7 +24,6 @@ import org.openpnp.spi.Nozzle;
 import org.openpnp.spi.PropertySheetHolder;
 import org.openpnp.spi.VisionProvider;
 import org.pmw.tinylog.Logger;
-import org.python.modules.thread.thread;
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.core.Persist;
@@ -34,8 +31,6 @@ import org.simpleframework.xml.core.Persist;
 
 public class Neoden4Feeder extends ReferenceFeeder {
 
-    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-    
     @Attribute(required = false)
     protected String actuatorName;
 
@@ -47,7 +42,7 @@ public class Neoden4Feeder extends ReferenceFeeder {
 
     @Element(required = false)
     private int partRotationInTape = 0;
-    
+
     @Element(required = false)
     protected Vision vision = new Vision();
 
@@ -128,7 +123,7 @@ public class Neoden4Feeder extends ReferenceFeeder {
 
     private Location getVisionOffsets(Head head, Location pickLocation) throws Exception {
         Logger.debug("getVisionOffsets({}, {})", head.getName(), pickLocation);
-        
+
         // Find the Camera to be used for vision
         Camera camera = null;
         for (Camera c : head.getCameras()) {
@@ -140,11 +135,11 @@ public class Neoden4Feeder extends ReferenceFeeder {
         if (camera == null) {
             throw new Exception("No vision capable camera found on head.");
         }
-        
+
         if (vision.getTemplateImage() == null) {
             throw new Exception("Template image is required when vision is enabled.");
         }
-        
+
         if (vision.getAreaOfInterest().getWidth() == 0 || vision.getAreaOfInterest().getHeight() == 0) {
             throw new Exception("Area of Interest is required when vision is enabled.");
         }
@@ -280,7 +275,7 @@ public class Neoden4Feeder extends ReferenceFeeder {
     public void setActuatorName(String actuatorName) {
         String oldValue = this.actuatorName;
         this.actuatorName = actuatorName;
-        propertyChangeSupport.firePropertyChange("actuatorName", oldValue, actuatorName);
+        firePropertyChange("actuatorName", oldValue, actuatorName);
     }
 
     public int getFeedCount() {
@@ -293,29 +288,13 @@ public class Neoden4Feeder extends ReferenceFeeder {
         this.feedCount = feedCount;
         firePropertyChange("feedCount", oldValue, feedCount);
     }
-    
+
     public Vision getVision() {
         return vision;
     }
 
     public void setVision(Vision vision) {
         this.vision = vision;
-    }
-
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(listener);
-    }
-
-    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
-    }
-
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(listener);
-    }
-
-    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
     @Override
@@ -431,5 +410,14 @@ public class Neoden4Feeder extends ReferenceFeeder {
         public void setTemplateImageBottomRight(Location templateImageBottomRight) {
             this.templateImageBottomRight = templateImageBottomRight;
         }
+    }
+
+    @Override
+    public void applyLocationOffset(Location offset) throws Exception {
+        super.applyLocationOffset(offset);
+
+        // invalidate the vision offset and pick location
+        visionOffset = null;
+        pickLocation = null;
     }
 }

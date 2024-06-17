@@ -21,8 +21,6 @@ package org.openpnp.machine.reference.feeder;
 
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
@@ -68,10 +66,6 @@ import org.simpleframework.xml.core.Persist;
  * the right position.
  */
 public class ReferenceDragFeeder extends ReferenceFeeder {
-
-
-    private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
-
     @Element
     protected Location feedStartLocation = new Location(LengthUnit.Millimeters);
     @Element
@@ -247,6 +241,14 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
         }
     }
 
+    @Override
+    public void applyLocationOffset(Location offset) throws Exception {
+        super.applyLocationOffset(offset);
+        resetVisionOffsets();
+        setFeedStartLocation(getFeedStartLocation().addWithRotation(offset));
+        setFeedEndLocation(getFeedEndLocation().addWithRotation(offset));
+    }
+
     // TODO: Throw an Exception if vision fails.
     private Location getVisionOffsets(Head head, Location pickLocation) throws Exception {
         Logger.debug("getVisionOffsets({}, {})", head.getName(), pickLocation);
@@ -356,7 +358,9 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
     }
 
     public void setFeedStartLocation(Location feedStartLocation) {
+        Location oldValue = this.feedStartLocation;
         this.feedStartLocation = feedStartLocation;
+        firePropertyChange("feedStartLocation", oldValue, feedStartLocation);
     }
 
     public Location getFeedEndLocation() {
@@ -364,7 +368,9 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
     }
 
     public void setFeedEndLocation(Location feedEndLocation) {
+        Location oldValue = this.feedEndLocation;
         this.feedEndLocation = feedEndLocation;
+        firePropertyChange("feedEndLocation", oldValue, feedEndLocation);
     }
 
     public Length getPartPitch() {
@@ -390,7 +396,7 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
     public void setActuatorName(String actuatorName) {
         String oldValue = this.actuatorName;
         this.actuatorName = actuatorName;
-        propertyChangeSupport.firePropertyChange("actuatorName", oldValue, actuatorName);
+        firePropertyChange("actuatorName", oldValue, actuatorName);
     }
 
     public String getPeelOffActuatorName() {
@@ -400,7 +406,7 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
     public void setPeelOffActuatorName(String actuatorName) {
         String oldValue = this.peelOffActuatorName;
         this.peelOffActuatorName = actuatorName;
-        propertyChangeSupport.firePropertyChange("actuatorName", oldValue, actuatorName);
+        firePropertyChange("actuatorName", oldValue, actuatorName);
     }
 
     public Length getBackoffDistance() {
@@ -417,22 +423,6 @@ public class ReferenceDragFeeder extends ReferenceFeeder {
 
     public void setVision(Vision vision) {
         this.vision = vision;
-    }
-
-    public void addPropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(listener);
-    }
-
-    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.addPropertyChangeListener(propertyName, listener);
-    }
-
-    public void removePropertyChangeListener(PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(listener);
-    }
-
-    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
     @Override
